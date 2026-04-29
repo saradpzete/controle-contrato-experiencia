@@ -109,11 +109,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 const API = 'https://script.google.com/macros/s/AKfycbwMgYr6Mcsw1duA4r2rUsq9GCDU1DqbxJVNHNiTW5PNivNW350efaiWs_0xeZUViWk/exec';
 
 const COLABORADORAS = [
-  {id:'c1', nome:'Colaboradora 1'},
-  {id:'c2', nome:'Colaboradora 2'},
-  {id:'c3', nome:'Colaboradora 3'},
-  {id:'c4', nome:'Colaboradora 4'},
-  {id:'c5', nome:'Colaboradora 5'},
+  {id:'c1', nome:'Evelin Gonzaga'},
+  {id:'c2', nome:'Ana Paula'},
+  {id:'c3', nome:'Mayra Gabrielle'},
+  {id:'c4', nome:'Michelly Oliveira'},
 ];
 
 let empresas = [];
@@ -190,7 +189,6 @@ async function fetchData(){
   try{
     const r=await fetch(API+'?t='+Date.now());
     const data=await r.json();
-    // deduplica por id mantendo o último
     const map={};
     data.forEach(row=>{ map[String(row.id)]=row; });
     empresas=Object.values(map).map(normalizeRow);
@@ -398,3 +396,4 @@ setInterval(fetchData,60000);
 </script>
 </body>
 </html>
+
