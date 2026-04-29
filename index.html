@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protocolo de Contratos — Cleoselma Contabilidade</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --navy:#0f2a4a;--navy-mid:#1a3d6b;--navy-light:#e8eef6;--navy-border:#c2d0e4;
+  --rose:#c2185b;--rose-light:#fce4ec;--rose-border:#f48fb1;--rose-mid:#e91e8c;
+  --success:#1b6e3a;--success-bg:#e6f4ec;
+  --danger:#991b1b;--danger-bg:#fef2f2;
+  --warn-bg:#fff8e1;--warn:#7c5a00;
+  --text:#0f1f33;--text-muted:#5a6a7a;--surface:#f4f6fa;--white:#ffffff;--border:#dce4ef;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--surface);color:var(--text);}
+.topbar{background:var(--navy);padding:14px 20px;display:flex;align-items:center;gap:14px;}
+.logo-circle{width:38px;height:38px;border-radius:50%;background:var(--rose);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0;}
+.brand-name{font-size:15px;font-weight:600;color:#fff;}
+.brand-dept{font-size:11px;color:#93aac7;margin-top:1px;}
+.badge-proto{margin-left:auto;background:var(--rose);color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;}
+.body{padding:1.25rem 1rem;}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:1.25rem;}
+.stat{background:var(--white);border-radius:10px;padding:12px 14px;border:1px solid var(--border);}
+.stat-label{font-size:11px;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:0.04em;}
+.stat-num{font-size:22px;font-weight:600;color:var(--navy);margin-top:3px;}
+.tabs-wrap{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;}
+.tab{padding:6px 14px;border-radius:20px;border:1.5px solid var(--navy-border);font-size:13px;cursor:pointer;background:transparent;color:var(--navy-mid);font-weight:500;}
+.tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+.tab:hover:not(.active){background:var(--navy-light);}
+.card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:1rem;border-top:3px solid var(--navy);}
+.collab-header{display:flex;align-items:center;gap:12px;margin-bottom:1rem;}
+.avatar{width:42px;height:42px;border-radius:50%;background:var(--rose);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;}
+.collab-name{font-size:15px;font-weight:600;color:var(--navy);}
+.collab-sub{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.periodo-toggle{display:flex;gap:8px;margin-bottom:1rem;}
+.ptoggle{padding:5px 16px;border-radius:20px;border:1.5px solid var(--border);font-size:13px;cursor:pointer;font-weight:600;background:transparent;color:var(--text-muted);}
+.ptoggle.on-15{background:var(--navy);color:#fff;border-color:var(--navy);}
+.ptoggle.on-30{background:var(--rose);color:#fff;border-color:var(--rose);}
+.progress-wrap{margin-bottom:1rem;}
+.progress-info{display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px;}
+.progress-bar{height:6px;background:var(--navy-light);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--navy),var(--rose));transition:width 0.4s;}
+.add-row{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;}
+.add-row input{flex:1;min-width:120px;padding:8px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:13px;background:var(--surface);color:var(--text);}
+.add-row input:focus{outline:none;border-color:var(--rose);}
+.add-row button{padding:8px 16px;border-radius:8px;border:none;font-size:13px;cursor:pointer;background:var(--rose);color:#fff;font-weight:600;}
+.add-row button:hover{background:var(--rose-mid);}
+.empresa-block{border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;}
+.empresa-block.encerrado{opacity:0.55;}
+.empresa-top{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--navy-light);}
+.empresa-nome-text{flex:1;font-size:14px;font-weight:600;color:var(--navy);}
+.empresa-nome-text.done{text-decoration:line-through;color:var(--text-muted);}
+.status-badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+.badge-aguardando{background:var(--warn-bg);color:var(--warn);}
+.badge-respondido{background:var(--success-bg);color:var(--success);}
+.badge-vencido{background:var(--danger-bg);color:var(--danger);}
+.empresa-del{background:none;border:none;cursor:pointer;font-size:18px;color:#aaa;padding:0 2px;line-height:1;}
+.empresa-del:hover{color:var(--danger);}
+.empresa-body{padding:10px 14px;}
+.step-label{font-size:10px;font-weight:700;color:var(--rose);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.step-label::after{content:'';flex:1;height:1px;background:var(--rose-border);opacity:0.4;}
+.chk-row{display:flex;align-items:center;gap:9px;padding:5px 0;border-bottom:1px solid var(--surface);}
+.chk{width:16px;height:16px;border-radius:4px;cursor:pointer;accent-color:var(--navy);flex-shrink:0;}
+.chk.cobranca{accent-color:var(--rose);}
+.row-label{flex:1;font-size:13px;color:var(--text);}
+.row-label.done{text-decoration:line-through;color:#aaa;}
+.row-date{font-size:11px;color:var(--text-muted);white-space:nowrap;background:var(--surface);padding:2px 7px;border-radius:10px;}
+.add-cobranca-btn{margin-top:10px;font-size:12px;padding:5px 12px;border-radius:8px;border:1.5px dashed var(--rose-border);background:transparent;color:var(--rose);cursor:pointer;font-weight:500;}
+.add-cobranca-btn:hover{background:var(--rose-light);}
+.encerrar-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.encerrar-btn{font-size:12px;padding:5px 14px;border-radius:8px;border:1.5px solid;background:transparent;cursor:pointer;font-weight:500;}
+.btn-respondido{color:var(--success);border-color:#6fcf97;}
+.btn-respondido:hover{background:var(--success-bg);}
+.btn-vencido{color:var(--danger);border-color:#f09595;}
+.btn-vencido:hover{background:var(--danger-bg);}
+.empty{font-size:13px;color:var(--text-muted);padding:8px 0;}
+.divider{height:1px;background:var(--border);margin:10px 0;}
+.loading{text-align:center;padding:2rem;font-size:13px;color:var(--text-muted);}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:999;}
+.toast.show{opacity:1;}
+.sync-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding:8px 12px;background:var(--navy-light);border-radius:8px;border:1px solid var(--navy-border);}
+.sync-status{font-size:12px;color:var(--navy-mid);font-weight:500;}
+.sync-btn{font-size:12px;padding:4px 12px;border-radius:8px;border:1.5px solid var(--navy-border);background:transparent;color:var(--navy-mid);cursor:pointer;font-weight:500;}
+.sync-btn:hover{background:var(--white);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo-circle">CC</div>
+  <div>
+    <div class="brand-name">Cleoselma Contabilidade</div>
+    <div class="brand-dept">Departamento Pessoal</div>
+  </div>
+  <div class="badge-proto">Protocolo de Contratos</div>
+</div>
+
+<div class="body">
+  <div class="summary" id="summary"></div>
+  <div class="tabs-wrap" id="tabs"></div>
+  <div id="painel"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbwMgYr6Mcsw1duA4r2rUsq9GCDU1DqbxJVNHNiTW5PNivNW350efaiWs_0xeZUViWk/exec';
+
+const COLABORADORAS = [
+  {id:'c1', nome:'Colaboradora 1'},
+  {id:'c2', nome:'Colaboradora 2'},
+  {id:'c3', nome:'Colaboradora 3'},
+  {id:'c4', nome:'Colaboradora 4'},
+  {id:'c5', nome:'Colaboradora 5'},
+];
+
+let empresas = [];
+let activeTab = 'c1';
+let periodo = '15';
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function today(){return new Date().toLocaleDateString('pt-BR');}
+
+function addDays(d,n){
+  const p=d.split('/');
+  const dt=new Date(+p[2],+p[1]-1,+p[0]);
+  dt.setDate(dt.getDate()+n);
+  return dt.toLocaleDateString('pt-BR');
+}
+
+function getInitials(n){
+  const p=n.trim().split(' ');
+  if(p.length===1)return p[0].substring(0,2).toUpperCase();
+  return(p[0][0]+p[p.length-1][0]).toUpperCase();
+}
+
+function normalizeDate(val){
+  if(!val||val===''||val==='undefined'||val==='null') return '';
+  const s=String(val);
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+  try{
+    const d=new Date(s);
+    if(!isNaN(d.getTime())) return d.toLocaleDateString('pt-BR');
+  }catch(e){}
+  return '';
+}
+
+function normalizeRow(row){
+  let cobrancas=[];
+  try{
+    const c=row.cobrancas;
+    if(Array.isArray(c)) cobrancas=c;
+    else if(typeof c==='string'&&c!==''&&c!=='[]') cobrancas=JSON.parse(c);
+  }catch(e){cobrancas=[];}
+
+  const comunicadoFeito =
+    row.comunicado_feito===true ||
+    row.comunicado_feito==='true' ||
+    (row.comunicado && row.comunicado.feito===true);
+
+  const comunicadoData =
+    normalizeDate(row.comunicado_data) ||
+    normalizeDate(row.comunicado && row.comunicado.data) ||
+    '';
+
+  return {
+    id: String(row.id),
+    colaboradora: String(row.colaboradora),
+    empresa: String(row.empresa),
+    vencimento: normalizeDate(row.vencimento),
+    periodo: String(row.periodo),
+    status: String(row.status||'aguardando'),
+    comunicado: {feito: comunicadoFeito, data: comunicadoData},
+    cobrancas: cobrancas.map(cb=>({
+      feito: cb.feito===true||cb.feito==='true',
+      data: normalizeDate(cb.data)
+    }))
+  };
+}
+
+async function fetchData(){
+  document.getElementById('painel').innerHTML='<div class="loading">Carregando dados...</div>';
+  try{
+    const r=await fetch(API+'?t='+Date.now());
+    const data=await r.json();
+    // deduplica por id mantendo o último
+    const map={};
+    data.forEach(row=>{ map[String(row.id)]=row; });
+    empresas=Object.values(map).map(normalizeRow);
+    render();
+  }catch(e){
+    document.getElementById('painel').innerHTML='<div class="loading">Erro ao carregar. Clique em Atualizar.</div>';
+  }
+}
+
+async function saveRow(emp){
+  try{
+    await fetch(API,{
+      method:'POST',
+      body:JSON.stringify({
+        action:'save',
+        id:emp.id,
+        colaboradora:emp.colaboradora,
+        empresa:emp.empresa,
+        vencimento:emp.vencimento||'',
+        periodo:emp.periodo,
+        status:emp.status,
+        comunicado_feito:emp.comunicado.feito,
+        comunicado_data:emp.comunicado.data||'',
+        cobrancas:emp.cobrancas
+      })
+    });
+    toast('Salvo ✓');
+  }catch(e){toast('Erro ao salvar.');}
+}
+
+async function deleteRow(id){
+  try{
+    await fetch(API,{method:'POST',body:JSON.stringify({action:'delete',id})});
+    toast('Removido ✓');
+  }catch(e){toast('Erro ao remover.');}
+}
+
+function getEmpresas(){
+  return empresas.filter(e=>e.colaboradora===activeTab&&String(e.periodo)===String(periodo));
+}
+
+function renderSummary(){
+  let total=0,aguardando=0,respondidos=0,vencidos=0;
+  COLABORADORAS.forEach(c=>{
+    empresas.filter(e=>e.colaboradora===c.id&&String(e.periodo)===String(periodo)).forEach(e=>{
+      total++;
+      if(e.status==='respondido')respondidos++;
+      else if(e.status==='vencido')vencidos++;
+      else aguardando++;
+    });
+  });
+  document.getElementById('summary').innerHTML=`
+    <div class="stat"><div class="stat-label">Contratos · dia ${periodo}</div><div class="stat-num">${total}</div></div>
+    <div class="stat"><div class="stat-label">Aguardando</div><div class="stat-num" style="color:var(--warn)">${aguardando}</div></div>
+    <div class="stat"><div class="stat-label">Respondidos</div><div class="stat-num" style="color:var(--success)">${respondidos}</div></div>
+    <div class="stat"><div class="stat-label">Vencidos</div><div class="stat-num" style="color:var(--danger)">${vencidos}</div></div>`;
+}
+
+function renderTabs(){
+  document.getElementById('tabs').innerHTML=COLABORADORAS.map(c=>
+    `<button class="tab ${c.id===activeTab?'active':''}" onclick="setTab('${c.id}')">${c.nome}</button>`
+  ).join('');
+}
+
+function renderPainel(){
+  const collab=COLABORADORAS.find(c=>c.id===activeTab);
+  const lista=getEmpresas();
+  const encerrados=lista.filter(e=>e.status==='respondido'||e.status==='vencido').length;
+  const pct=lista.length>0?Math.round((encerrados/lista.length)*100):0;
+
+  let empresasHTML=lista.length===0
+    ?`<div class="empty">Nenhuma empresa cadastrada para o dia ${periodo}. Adicione acima.</div>`
+    :lista.map(e=>{
+      const enc=e.status==='respondido'||e.status==='vencido';
+      let badgeClass='badge-aguardando',badgeLabel='Aguardando retorno';
+      if(e.status==='respondido'){badgeClass='badge-respondido';badgeLabel='Cliente respondeu';}
+      if(e.status==='vencido'){badgeClass='badge-vencido';badgeLabel='Contrato vencido';}
+      const comunicadoFeito=e.comunicado&&e.comunicado.feito;
+      const cobrancasHTML=(e.cobrancas||[]).map((cb,i)=>`
+        <div class="chk-row">
+          <input type="checkbox" class="chk cobranca" ${cb.feito?'checked':''} ${enc?'disabled':''} onchange="toggleCobranca('${e.id}',${i},this.checked)">
+          <span class="row-label ${cb.feito?'done':''}">Cobrança ${i+1} de retorno</span>
+          <span class="row-date">${cb.data||''}</span>
+        </div>`).join('');
+      const addCobrancaBtn=enc?'':
+        `<button class="add-cobranca-btn" onclick="addCobranca('${e.id}')">+ Registrar nova cobrança (+2 dias)</button>`;
+      const encerrarBtns=enc?'':`
+        <div class="encerrar-row">
+          <button class="encerrar-btn btn-respondido" onclick="encerrar('${e.id}','respondido')">✓ Cliente respondeu</button>
+          <button class="encerrar-btn btn-vencido" onclick="encerrar('${e.id}','vencido')">Contrato venceu</button>
+        </div>`;
+      return `
+      <div class="empresa-block ${enc?'encerrado':''}">
+        <div class="empresa-top">
+          <span class="empresa-nome-text ${enc?'done':''}">${e.empresa}${e.vencimento?` <span style="font-size:11px;color:#5a6a7a;font-weight:400">· vence ${e.vencimento}</span>`:''}</span>
+          <span class="status-badge ${badgeClass}">${badgeLabel}</span>
+          <button class="empresa-del" onclick="delEmpresa('${e.id}')" title="Remover">×</button>
+        </div>
+        <div class="empresa-body">
+          <div class="step-label">1 · Comunicação inicial</div>
+          <div class="chk-row">
+            <input type="checkbox" class="chk" ${comunicadoFeito?'checked':''} ${enc?'disabled':''} onchange="toggleComunicado('${e.id}',this.checked)">
+            <span class="row-label ${comunicadoFeito?'done':''}">Contrato comunicado ao cliente</span>
+            <span class="row-date">${e.comunicado&&e.comunicado.data?e.comunicado.data:''}</span>
+          </div>
+          ${comunicadoFeito?`
+          <div class="divider"></div>
+          <div class="step-label" style="margin-top:8px;">2 · Acompanhamento — a cada 2 dias</div>
+          ${cobrancasHTML}
+          ${addCobrancaBtn}
+          ${encerrarBtns}`:''}
+        </div>
+      </div>`;
+    }).join('');
+
+  document.getElementById('painel').innerHTML=`
+    <div class="card">
+      <div class="collab-header">
+        <div class="avatar">${getInitials(collab.nome)}</div>
+        <div>
+          <div class="collab-name">${collab.nome}</div>
+          <div class="collab-sub">${encerrados} de ${lista.length} contratos encerrados · dia ${periodo}</div>
+        </div>
+      </div>
+      <div class="periodo-toggle">
+        <button class="ptoggle ${periodo==='15'?'on-15':''}" onclick="setPeriodo('15')">Dia 15</button>
+        <button class="ptoggle ${periodo==='30'?'on-30':''}" onclick="setPeriodo('30')">Dia 30</button>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-info"><span>Progresso</span><span>${pct}%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="sync-bar">
+        <span class="sync-status">🟢 Sincronizado com Google Sheets</span>
+        <button class="sync-btn" onclick="fetchData()">↻ Atualizar</button>
+      </div>
+      <div class="add-row">
+        <input id="inp-empresa" type="text" placeholder="Nome da empresa..." onkeydown="if(event.key==='Enter')addEmpresa()">
+        <input id="inp-venc" type="text" placeholder="Vencimento (ex: 20/05/2025)" style="max-width:200px;" onkeydown="if(event.key==='Enter')addEmpresa()">
+        <button onclick="addEmpresa()">+ Adicionar</button>
+      </div>
+      ${empresasHTML}
+    </div>`;
+}
+
+function render(){renderSummary();renderTabs();renderPainel();}
+function setTab(id){activeTab=id;render();}
+function setPeriodo(p){periodo=p;render();}
+
+async function addEmpresa(){
+  const inp=document.getElementById('inp-empresa');
+  const venc=document.getElementById('inp-venc');
+  const nome=inp.value.trim();
+  if(!nome)return;
+  const emp={
+    id:String(Date.now()),
+    colaboradora:activeTab,
+    empresa:nome,
+    vencimento:venc?venc.value.trim():'',
+    periodo:periodo,
+    status:'aguardando',
+    comunicado:{feito:false,data:''},
+    cobrancas:[]
+  };
+  empresas.push(emp);
+  inp.value='';if(venc)venc.value='';
+  render();
+  await saveRow(emp);
+}
+
+async function delEmpresa(id){
+  empresas=empresas.filter(e=>e.id!==id);
+  render();
+  await deleteRow(id);
+}
+
+async function toggleComunicado(id,checked){
+  const emp=empresas.find(e=>e.id===id);
+  if(emp){emp.comunicado={feito:checked,data:checked?today():''};render();await saveRow(emp);}
+}
+
+async function addCobranca(id){
+  const emp=empresas.find(e=>e.id===id);
+  if(!emp)return;
+  const lastDate=emp.cobrancas.length>0
+    ?emp.cobrancas[emp.cobrancas.length-1].data
+    :(emp.comunicado&&emp.comunicado.data?emp.comunicado.data:today());
+  emp.cobrancas.push({feito:false,data:addDays(lastDate,2)});
+  render();
+  await saveRow(emp);
+}
+
+async function toggleCobranca(id,idx,checked){
+  const emp=empresas.find(e=>e.id===id);
+  if(emp&&emp.cobrancas[idx]){emp.cobrancas[idx].feito=checked;render();await saveRow(emp);}
+}
+
+async function encerrar(id,status){
+  const emp=empresas.find(e=>e.id===id);
+  if(emp){emp.status=status;render();await saveRow(emp);}
+}
+
+fetchData();
+setInterval(fetchData,60000);
+</script>
+</body>
+</html>
