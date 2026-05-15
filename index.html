@@ -78,6 +78,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .empty{font-size:13px;color:var(--text-muted);padding:8px 0;}
 .divider{height:1px;background:var(--border);margin:10px 0;}
 .loading{text-align:center;padding:2rem;font-size:13px;color:var(--text-muted);}
+.section-sep{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin:16px 0 8px;display:flex;align-items:center;gap:8px;}
+.section-sep::before,.section-sep::after{content:'';flex:1;height:1px;background:var(--border);}
+.btn-arquivar{font-size:11px;padding:3px 10px;border-radius:8px;border:1.5px solid #ccc;background:transparent;color:var(--text-muted);cursor:pointer;margin-left:auto;}
+.btn-arquivar:hover{background:var(--surface);}
+.empresa-block.arquivado{display:none;}
+.toggle-arquivados{font-size:12px;color:var(--text-muted);cursor:pointer;text-decoration:underline;margin-top:6px;display:inline-block;}
+
 .toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:999;}
 .toast.show{opacity:1;}
 .sync-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding:8px 12px;background:var(--navy-light);border-radius:8px;border:1px solid var(--navy-border);}
@@ -110,7 +117,7 @@ const API = 'https://script.google.com/macros/s/AKfycbwMgYr6Mcsw1duA4r2rUsq9GCDU
 
 const COLABORADORAS = [
   {id:'c1', nome:'Evelin Gonzaga'},
-  {id:'c2', nome:'Ana Paula'},
+  {id:'c2', nome:'Jamilly'},
   {id:'c3', nome:'Mayra Gabrielle'},
   {id:'c4', nome:'Michelly Oliveira'},
 ];
@@ -176,6 +183,7 @@ function normalizeRow(row){
     vencimento: normalizeDate(row.vencimento),
     periodo: String(row.periodo),
     status: String(row.status||'aguardando'),
+    arquivado: row.arquivado===true||row.arquivado==='true',
     comunicado: {feito: comunicadoFeito, data: comunicadoData},
     cobrancas: cobrancas.map(cb=>({
       feito: cb.feito===true||cb.feito==='true',
@@ -210,6 +218,7 @@ async function saveRow(emp){
         vencimento:emp.vencimento||'',
         periodo:emp.periodo,
         status:emp.status,
+        arquivado:emp.arquivado||false,
         comunicado_feito:emp.comunicado.feito,
         comunicado_data:emp.comunicado.data||'',
         cobrancas:emp.cobrancas
@@ -253,56 +262,85 @@ function renderTabs(){
   ).join('');
 }
 
+let mostrarArquivados = false;
+
+function renderEmpresaBlock(e){
+  const enc=e.status==='respondido'||e.status==='vencido';
+  const arquivado=e.arquivado===true;
+  let badgeClass='badge-aguardando',badgeLabel='Aguardando retorno';
+  if(e.status==='respondido'){badgeClass='badge-respondido';badgeLabel='Cliente respondeu';}
+  if(e.status==='vencido'){badgeClass='badge-vencido';badgeLabel='Contrato vencido';}
+  const comunicadoFeito=e.comunicado&&e.comunicado.feito;
+  const cobrancasHTML=(e.cobrancas||[]).map((cb,i)=>`
+    <div class="chk-row">
+      <input type="checkbox" class="chk cobranca" ${cb.feito?'checked':''} ${enc?'disabled':''} onchange="toggleCobranca('${e.id}',${i},this.checked)">
+      <span class="row-label ${cb.feito?'done':''}">Cobrança ${i+1} de retorno</span>
+      <span class="row-date">${cb.data||''}</span>
+    </div>`).join('');
+  const addCobrancaBtn=enc?'':
+    `<button class="add-cobranca-btn" onclick="addCobranca('${e.id}')">+ Registrar nova cobrança (+2 dias)</button>`;
+  const encerrarBtns=enc?'':`
+    <div class="encerrar-row">
+      <button class="encerrar-btn btn-respondido" onclick="encerrar('${e.id}','respondido')">✓ Cliente respondeu</button>
+      <button class="encerrar-btn btn-vencido" onclick="encerrar('${e.id}','vencido')">Contrato venceu</button>
+    </div>`;
+  const arquivarBtn=enc?`<button class="btn-arquivar" onclick="arquivar('${e.id}',${!arquivado})">${arquivado?'↩ Restaurar':'📁 Arquivar'}</button>`:'';
+  return `
+  <div class="empresa-block ${enc?'encerrado':''} ${arquivado?'arquivado':''}">
+    <div class="empresa-top">
+      <span class="empresa-nome-text ${enc?'done':''}">${e.empresa}${e.vencimento?` <span style="font-size:11px;color:#5a6a7a;font-weight:400">· vence ${e.vencimento}</span>`:''}</span>
+      <span class="status-badge ${badgeClass}">${badgeLabel}</span>
+      ${arquivarBtn}
+      <button class="empresa-del" onclick="delEmpresa('${e.id}')" title="Remover">×</button>
+    </div>
+    <div class="empresa-body">
+      <div class="step-label">1 · Comunicação inicial</div>
+      <div class="chk-row">
+        <input type="checkbox" class="chk" ${comunicadoFeito?'checked':''} ${enc?'disabled':''} onchange="toggleComunicado('${e.id}',this.checked)">
+        <span class="row-label ${comunicadoFeito?'done':''}">Contrato comunicado ao cliente</span>
+        <span class="row-date">${e.comunicado&&e.comunicado.data?e.comunicado.data:''}</span>
+      </div>
+      ${comunicadoFeito?`
+      <div class="divider"></div>
+      <div class="step-label" style="margin-top:8px;">2 · Acompanhamento — a cada 2 dias</div>
+      ${cobrancasHTML}
+      ${addCobrancaBtn}
+      ${encerrarBtns}`:''}
+    </div>
+  </div>`;
+}
+
 function renderPainel(){
   const collab=COLABORADORAS.find(c=>c.id===activeTab);
   const lista=getEmpresas();
   const encerrados=lista.filter(e=>e.status==='respondido'||e.status==='vencido').length;
   const pct=lista.length>0?Math.round((encerrados/lista.length)*100):0;
 
-  let empresasHTML=lista.length===0
-    ?`<div class="empty">Nenhuma empresa cadastrada para o dia ${periodo}. Adicione acima.</div>`
-    :lista.map(e=>{
-      const enc=e.status==='respondido'||e.status==='vencido';
-      let badgeClass='badge-aguardando',badgeLabel='Aguardando retorno';
-      if(e.status==='respondido'){badgeClass='badge-respondido';badgeLabel='Cliente respondeu';}
-      if(e.status==='vencido'){badgeClass='badge-vencido';badgeLabel='Contrato vencido';}
-      const comunicadoFeito=e.comunicado&&e.comunicado.feito;
-      const cobrancasHTML=(e.cobrancas||[]).map((cb,i)=>`
-        <div class="chk-row">
-          <input type="checkbox" class="chk cobranca" ${cb.feito?'checked':''} ${enc?'disabled':''} onchange="toggleCobranca('${e.id}',${i},this.checked)">
-          <span class="row-label ${cb.feito?'done':''}">Cobrança ${i+1} de retorno</span>
-          <span class="row-date">${cb.data||''}</span>
-        </div>`).join('');
-      const addCobrancaBtn=enc?'':
-        `<button class="add-cobranca-btn" onclick="addCobranca('${e.id}')">+ Registrar nova cobrança (+2 dias)</button>`;
-      const encerrarBtns=enc?'':`
-        <div class="encerrar-row">
-          <button class="encerrar-btn btn-respondido" onclick="encerrar('${e.id}','respondido')">✓ Cliente respondeu</button>
-          <button class="encerrar-btn btn-vencido" onclick="encerrar('${e.id}','vencido')">Contrato venceu</button>
-        </div>`;
-      return `
-      <div class="empresa-block ${enc?'encerrado':''}">
-        <div class="empresa-top">
-          <span class="empresa-nome-text ${enc?'done':''}">${e.empresa}${e.vencimento?` <span style="font-size:11px;color:#5a6a7a;font-weight:400">· vence ${e.vencimento}</span>`:''}</span>
-          <span class="status-badge ${badgeClass}">${badgeLabel}</span>
-          <button class="empresa-del" onclick="delEmpresa('${e.id}')" title="Remover">×</button>
-        </div>
-        <div class="empresa-body">
-          <div class="step-label">1 · Comunicação inicial</div>
-          <div class="chk-row">
-            <input type="checkbox" class="chk" ${comunicadoFeito?'checked':''} ${enc?'disabled':''} onchange="toggleComunicado('${e.id}',this.checked)">
-            <span class="row-label ${comunicadoFeito?'done':''}">Contrato comunicado ao cliente</span>
-            <span class="row-date">${e.comunicado&&e.comunicado.data?e.comunicado.data:''}</span>
-          </div>
-          ${comunicadoFeito?`
-          <div class="divider"></div>
-          <div class="step-label" style="margin-top:8px;">2 · Acompanhamento — a cada 2 dias</div>
-          ${cobrancasHTML}
-          ${addCobrancaBtn}
-          ${encerrarBtns}`:''}
-        </div>
-      </div>`;
-    }).join('');
+  // Separar: ativos, encerrados visíveis, arquivados
+  const ativos=lista.filter(e=>e.status==='aguardando'&&!e.arquivado);
+  const encerradosVisiveis=lista.filter(e=>(e.status==='respondido'||e.status==='vencido')&&!e.arquivado);
+  const arquivados=lista.filter(e=>e.arquivado===true);
+
+  let empresasHTML='';
+  if(lista.length===0){
+    empresasHTML=`<div class="empty">Nenhuma empresa cadastrada para o dia ${periodo}. Adicione acima.</div>`;
+  } else {
+    if(ativos.length>0) empresasHTML+=ativos.map(renderEmpresaBlock).join('');
+    if(encerradosVisiveis.length>0){
+      empresasHTML+=`<div class="section-sep">Encerrados</div>`;
+      empresasHTML+=encerradosVisiveis.map(renderEmpresaBlock).join('');
+    }
+    if(arquivados.length>0){
+      empresasHTML+=`<span class="toggle-arquivados" onclick="toggleArquivados()">${mostrarArquivados?'▲ Ocultar arquivados':'▼ Ver arquivados ('+arquivados.length+')'}</span>`;
+      if(mostrarArquivados){
+        empresasHTML+=`<div class="section-sep" style="margin-top:10px;">Arquivados</div>`;
+        empresasHTML+=arquivados.map(e=>{
+          const html=renderEmpresaBlock(e);
+          return html.replace('class="empresa-block arquivado"','class="empresa-block encerrado"');
+        }).join('');
+      }
+    }
+  }
 
   document.getElementById('painel').innerHTML=`
     <div class="card">
@@ -391,9 +429,20 @@ async function encerrar(id,status){
   if(emp){emp.status=status;render();await saveRow(emp);}
 }
 
+async function arquivar(id,arq){
+  const emp=empresas.find(e=>e.id===id);
+  if(emp){emp.arquivado=arq;render();await saveRow(emp);}
+}
+
+function toggleArquivados(){
+  mostrarArquivados=!mostrarArquivados;
+  renderPainel();
+}
+
 fetchData();
 setInterval(fetchData,60000);
 </script>
 </body>
 </html>
+
 
